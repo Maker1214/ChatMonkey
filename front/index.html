@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>聊天猴</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", Calibri, sans-serif;
+      margin: 20px;
+    }
+    #chatBox {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+    }
+    .user { color: blue; }
+    .bot { color: green; }
+    input[type="text"] {
+      width: 50%;
+      padding: 5px;
+    }
+    button {
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>聊天機器人</h2>
+  <div id="chatBox"></div>
+  <br>
+  <input id="userInput" type="text" placeholder="輸入訊息...">
+  <button onclick="loadHistory()">What monkey remember</button>
+
+  <script>
+    const user_id = "user123";  // 假設固定 ID
+    const input = document.getElementById("userInput");
+
+    // ⌨️ 按下 Enter 就送出訊息
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();  // 防止換行或表單提交
+        sendMessage();
+      }
+    });
+
+    // 🚀 傳送訊息給後端
+    async function sendMessage() {
+      const msg = input.value;
+      if (!msg.trim()) return;
+
+      addMessage("你", msg, "user");
+
+      try {
+        const res = await fetch("http://localhost:8000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id, message: msg })
+        });
+
+        const data = await res.json();
+        addMessage("聊天猴", data.reply, "bot");
+
+      } catch (err) {
+        console.error("⚠️ 發送失敗：", err);
+        addMessage("聊天猴", "抱歉，伺服器好像出問題了！", "bot");
+      }
+
+      input.value = "";    // ✅ 清空輸入
+      input.focus();       // ✅ 聚焦輸入
+    }
+
+    // 💬 加入訊息顯示
+    function addMessage(sender, msg, role) {
+      const box = document.getElementById("chatBox");
+      box.insertAdjacentHTML("beforeend",
+        `<div class="${role}"><b>${sender}:</b> ${msg}</div>`
+      );
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // 🧠 查詢歷史紀錄
+    async function loadHistory() {
+      try {
+        const res = await fetch(`http://localhost:8000/history?user_id=${user_id}`);
+        const data = await res.json();
+        const box = document.getElementById("chatBox");
+        box.innerHTML = "";
+
+        data.history.forEach(e => {
+          const sender = e.role === "user" ? "你" : "聊天猴";
+          addMessage(sender, e.message, e.role);
+        });
+      } catch (err) {
+        console.error("⚠️ 載入歷史失敗：", err);
+        addMessage("系統", "無法載入歷史紀錄", "bot");
+      }
+    }
+  </script>
+
+</body>
+</html>
