@@ -1,2 +1,6 @@
 # ignore virtual env
 .env
+
+#python cahe file
+__pycache__/
+*.pyc

@@ -8,15 +8,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
-import openai
+from openai import OpenAI
 
 # ========== 基本設定 ==========
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if openai.api_key is None:
-    raise RuntimeError("⚠️ 找不到 OpenAI API 金鑰，請檢查 .env 設定")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# key檢查不到的error handling
 
-DATABASE_URL = "mysql+pymysql://username:password@localhost/chat_db"  # 👉 修改為你的帳號密碼
+
+DATABASE_URL = "mysql+pymysql://root:Wayne2Ariel_1314@localhost/chat_db"  # 👉 修改為你的帳號密碼
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -53,15 +53,17 @@ async def chat(input: ChatInput):
     db.add(user_chat)
     db.commit()
 
-    # 呼叫 OpenAI API 取得回應
+    # 呼叫 OpenAI GPT 模型取得回應
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": input.message}]
+            messages=[
+                {"role": "user", "content": input.message}
+            ]
         )
         bot_reply = response.choices[0].message.content
     except Exception as e:
-        bot_reply = "呼叫 AI 失敗：" + str(e)
+        bot_reply = f"呼叫 AI 失敗：{e}"
 
     # 儲存 AI 回應
     bot_chat = Chat(user_id=input.user_id, message=bot_reply, role="bot")
