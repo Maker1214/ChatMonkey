@@ -11,17 +11,29 @@ import os
 from openai import OpenAI
 
 # ========== 基本設定 ==========
+# 載入 .env 檔案中的環境變數 到 Python 程式中，通常用在設定檔、金鑰或資料庫連線等敏感資訊的管理上。
+# load_dotenv() 會讀取 .env 檔，把裡面的變數寫入系統的環境變數（os.environ），讓你的程式可以透過 os.getenv() 取得。
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-# key檢查不到的error handling
+api_key=os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("找不到 OPENAI_API_KEY，請確認 .env 設定")
+client = OpenAI(api_key = api_key)
 
 
-DATABASE_URL = "mysql+pymysql://root:Wayne2Ariel_1314@localhost/chat_db"  # 👉 修改為你的帳號密碼
-engine = create_engine(DATABASE_URL, echo=False)
+DATABASE_URL = os.getenv("DATABASE_URL")
+# create_engine 是 SQLAlchemy 提供的一個函數，用來建立一個與資料庫的連線引擎（Engine）。這是連接資料庫的第一步，後續可以透過這個引擎執行 SQL 查詢或透過 ORM 進行操作。
+engine = create_engine(DATABASE_URL, echo=False) #echo=False 代表不會印出 SQL 查詢語句到 uvicorn console
+# Session 是你和資料庫之間的一個臨時會話連線，用來處理所有資料的查詢與變更操作，並負責管理資料的狀態（新增、修改、刪除）。
+# Session 就像是一個「編輯器」，你在這個 Session 裡做的操作（新增資料、改欄位、刪除）都只是暫存在編輯器裡，session.commit() 就像按下「儲存」鍵，才會把變更寫進實體資料庫。
 SessionLocal = sessionmaker(bind=engine)
+# declarative_base() 是 SQLAlchemy 用來建立 ORM 模型的「基底類別」，你定義的所有資料表都要繼承它。
+# why ORM? 
+# 1. ORM 自動處理參數轉義，幾乎不可能發生 SQL injection
+# 2. ORM 幫你「把資料表當成類別，把欄位當成屬性」，你就不用寫一堆 SQL，也不需手動轉換資料格式
 Base = declarative_base()
 
 # ========== 資料表定義 ==========
+# Chat會繼承declarative_base()所建立的ORM 模型
 class Chat(Base):
     __tablename__ = "chat_history"
     id = Column(Integer, primary_key=True, index=True)
@@ -30,16 +42,19 @@ class Chat(Base):
     role = Column(String(10))  # user 或 bot
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
+# 在資料庫中建立 chat_history 表
 Base.metadata.create_all(bind=engine)
 
 # ========== FastAPI 應用 ==========
 app = FastAPI()
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware, # 允許前端跨網域請求（例如本機前端與後端不同 port)
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
 # ========== 接收 POST /chat ==========
+# BaseModel : 定義 API 接收 / 回傳資料格式的基礎，它會自動幫你檢查資料正確性，並提供 JSON 轉換等功能。
+# Pydantic 的 BaseModel 就是 FastAPI 的資料驗證核心，它讓你不需要自己手動檢查資料格式或類型錯誤。
 class ChatInput(BaseModel):
     user_id: str
     message: str
