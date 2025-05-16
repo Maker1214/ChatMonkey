@@ -30,22 +30,26 @@
   <h2>聊天機器人</h2>
   <div id="chatBox"></div>
   <br>
-  <input id="userInput" type="text" placeholder="輸入訊息...">
-  <button onclick="loadHistory()">What monkey remember</button>
+  <textarea id="userInput" placeholder="輸入訊息..." rows="2" style="width: 50%; padding: 5px;"></textarea>
+  <button onclick="loadHistory()">對話紀錄</button>
+  <button onclick="clearChat()">清除對話</button>
 
   <script>
     const user_id = "user123";  // 假設固定 ID
     const input = document.getElementById("userInput");
+    const SERVER_IP = "192.168.86.25";  // 我的的電腦 IP
+    const SERVER_PORT = "8000";
+    const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
 
-    // ⌨️ 按下 Enter 就送出訊息
+    // 按下 Enter 就送出訊息
     input.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();  // 防止換行或表單提交
         sendMessage();
       }
     });
 
-    // 🚀 傳送訊息給後端
+    // 傳送訊息給後端
     async function sendMessage() {
       const msg = input.value;
       if (!msg.trim()) return;
@@ -53,7 +57,7 @@
       addMessage("你", msg, "user");
 
       try {
-        const res = await fetch("http://localhost:8000/chat", {
+        const res = await fetch(`${BASE_URL}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id, message: msg })
@@ -67,23 +71,24 @@
         addMessage("聊天猴", "抱歉，伺服器好像出問題了！", "bot");
       }
 
-      input.value = "";    // ✅ 清空輸入
-      input.focus();       // ✅ 聚焦輸入
+      input.value = "";    // 清空輸入
+      input.focus();       // 聚焦輸入
     }
 
-    // 💬 加入訊息顯示
+    // 加入訊息顯示
     function addMessage(sender, msg, role) {
       const box = document.getElementById("chatBox");
+      // JavaScript 動態插入 <div class ....></div>
       box.insertAdjacentHTML("beforeend",
         `<div class="${role}"><b>${sender}:</b> ${msg}</div>`
       );
       box.scrollTop = box.scrollHeight;
     }
 
-    // 🧠 查詢歷史紀錄
+    // 查詢歷史紀錄
     async function loadHistory() {
       try {
-        const res = await fetch(`http://localhost:8000/history?user_id=${user_id}`);
+        const res = await fetch(`${BASE_URL}/history?user_id=${user_id}`);
         const data = await res.json();
         const box = document.getElementById("chatBox");
         box.innerHTML = "";
@@ -95,6 +100,14 @@
       } catch (err) {
         console.error("⚠️ 載入歷史失敗：", err);
         addMessage("系統", "無法載入歷史紀錄", "bot");
+      }
+    }
+
+    // 清除對話框的對話紀錄，不會清除資料庫中的紀錄
+    function clearChat() {
+      const confirmed = confirm("你確定要清除對話紀錄嗎？");
+      if (confirmed) {
+        document.getElementById("chatBox").innerHTML = "";
       }
     }
   </script>

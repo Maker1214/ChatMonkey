@@ -1,0 +1,1 @@
+1. pip install fastapi uvicorn openai sqlalchemy pymysql python-dotenv cryptography

@@ -9,6 +9,8 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # ========== 基本設定 ==========
 # 載入 .env 檔案中的環境變數 到 Python 程式中，通常用在設定檔、金鑰或資料庫連線等敏感資訊的管理上。
@@ -51,6 +53,12 @@ app.add_middleware(
     CORSMiddleware, # 允許前端跨網域請求（例如本機前端與後端不同 port)
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
+
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def root():
+    return FileResponse("frontend/index.html")
 
 # ========== 接收 POST /chat ==========
 # BaseModel : 定義 API 接收 / 回傳資料格式的基礎，它會自動幫你檢查資料正確性，並提供 JSON 轉換等功能。
