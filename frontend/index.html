@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>聊天猴</title>
+  <title>猴猴聊天</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", Calibri, sans-serif;
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-  <h2>聊天機器人</h2>
+  <h2>猴猴聊天</h2>
   <div id="chatBox"></div>
   <br>
   <textarea id="userInput" placeholder="輸入訊息..." rows="2" style="width: 50%; padding: 5px;"></textarea>
@@ -35,13 +35,43 @@
   <button onclick="clearChat()">清除對話</button>
 
   <script>
-    const user_id = "user123";  // 假設固定 ID
+    async function verifyPasswordBeforeUse() {
+      const granted = localStorage.getItem("access_granted");
+      if (granted === "yes") return;
+
+      const password = prompt("請輸入密碼以使用聊天機器人：");
+      if (!password) {
+        alert("未輸入密碼");
+        history.back();
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://192.168.86.25:8000/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password })
+        });
+
+        if (res.status === 200) {
+          localStorage.setItem("access_granted", "yes");
+        } else {
+          alert("密碼錯誤！");
+          location.reload();
+        }
+      } catch (error) {
+        alert("伺服器無法連線，請確認後端已啟動");
+      }
+    }
+
+    verifyPasswordBeforeUse();  // 頁面載入時執行
+    const user_id = "user123";  // 固定 ID
     const input = document.getElementById("userInput");
-    const SERVER_IP = "192.168.86.25";  // 我的的電腦 IP
+    const SERVER_IP = "192.168.86.25";  // 電腦 IP
     const SERVER_PORT = "8000";
     const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
 
-    // 按下 Enter 就送出訊息
+    // 按下 Enter 就送出訊息，支援shift + enter 換行輸入
     input.addEventListener("keydown", function (event) {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();  // 防止換行或表單提交

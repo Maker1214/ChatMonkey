@@ -1,6 +1,6 @@
 # main.py
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func
@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+import hashlib
 
 # ========== 基本設定 ==========
 # 載入 .env 檔案中的環境變數 到 Python 程式中，通常用在設定檔、金鑰或資料庫連線等敏感資訊的管理上。
@@ -21,8 +22,8 @@ if not api_key:
     raise RuntimeError("找不到 OPENAI_API_KEY，請確認 .env 設定")
 client = OpenAI(api_key = api_key)
 
-
 DATABASE_URL = os.getenv("DATABASE_URL")
+CORRECT_PASSWORD_HASH = os.getenv("CORRECT_PASSWORD_HASH")
 # create_engine 是 SQLAlchemy 提供的一個函數，用來建立一個與資料庫的連線引擎（Engine）。這是連接資料庫的第一步，後續可以透過這個引擎執行 SQL 查詢或透過 ORM 進行操作。
 engine = create_engine(DATABASE_URL, echo=False) #echo=False 代表不會印出 SQL 查詢語句到 uvicorn console
 # Session 是你和資料庫之間的一個臨時會話連線，用來處理所有資料的查詢與變更操作，並負責管理資料的狀態（新增、修改、刪除）。
@@ -54,11 +55,27 @@ app.add_middleware(
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
+# ========== 掛載靜態檔案資料夾 ==========
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/")
 def root():
     return FileResponse("frontend/index.html")
+
+
+@app.post("/verify")
+async def verify_password(request: Request):
+    data = await request.json()
+    input_password = data.get("password")
+
+    # 將使用者輸入也 hash 後比對
+    hashed = hashlib.sha256(input_password.encode()).hexdigest()
+
+    if hashed == CORRECT_PASSWORD_HASH:
+        return JSONResponse({"status": "ok"})
+    else:
+        return JSONResponse({"status": "fail"}, status_code=401)
+    
 
 # ========== 接收 POST /chat ==========
 # BaseModel : 定義 API 接收 / 回傳資料格式的基礎，它會自動幫你檢查資料正確性，並提供 JSON 轉換等功能。
