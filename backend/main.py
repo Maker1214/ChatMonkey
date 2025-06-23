@@ -23,7 +23,7 @@ if not api_key:
 client = OpenAI(api_key = api_key)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-CORRECT_PASSWORD_HASH = os.getenv("CORRECT_PASSWORD_HASH")
+CORRECT_PASSWORD = os.getenv("PASSWORD")
 # create_engine 是 SQLAlchemy 提供的一個函數，用來建立一個與資料庫的連線引擎（Engine）。這是連接資料庫的第一步，後續可以透過這個引擎執行 SQL 查詢或透過 ORM 進行操作。
 engine = create_engine(DATABASE_URL, echo=False) #echo=False 代表不會印出 SQL 查詢語句到 uvicorn console
 # Session 是你和資料庫之間的一個臨時會話連線，用來處理所有資料的查詢與變更操作，並負責管理資料的狀態（新增、修改、刪除）。
@@ -62,16 +62,11 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 def root():
     return FileResponse("frontend/index.html")
 
-
+# ========== 驗證密碼 ==========
 @app.post("/verify")
 async def verify_password(request: Request):
     data = await request.json()
-    input_password = data.get("password")
-
-    # 將使用者輸入也 hash 後比對
-    hashed = hashlib.sha256(input_password.encode()).hexdigest()
-
-    if hashed == CORRECT_PASSWORD_HASH:
+    if data.get("password") == CORRECT_PASSWORD:
         return JSONResponse({"status": "ok"})
     else:
         return JSONResponse({"status": "fail"}, status_code=401)

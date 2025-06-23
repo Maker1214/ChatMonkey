@@ -35,41 +35,19 @@
   <button onclick="clearChat()">清除對話</button>
 
   <script>
-    async function verifyPasswordBeforeUse() {
-      const granted = localStorage.getItem("access_granted");
-      if (granted === "yes") return;
-
-      const password = prompt("請輸入密碼以使用聊天機器人：");
-      if (!password) {
-        alert("未輸入密碼");
-        history.back();
-        return;
-      }
-
-      try {
-        const res = await fetch(`http://192.168.86.25:8000/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password })
-        });
-
-        if (res.status === 200) {
-          localStorage.setItem("access_granted", "yes");
-        } else {
-          alert("密碼錯誤！");
-          location.reload();
-        }
-      } catch (error) {
-        alert("伺服器無法連線，請確認後端已啟動");
-      }
-    }
-
-    verifyPasswordBeforeUse();  // 頁面載入時執行
     const user_id = "user123";  // 固定 ID
     const input = document.getElementById("userInput");
-    const SERVER_IP = "192.168.86.25";  // 電腦 IP
-    const SERVER_PORT = "8000";
-    const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+    const BASE_URL = window.location.origin;
+
+    // 如果是手動打開 index.html 時才清除，從密碼頁跳轉就不清
+    if (!document.referrer.includes("password.html")) {
+      localStorage.removeItem("access_granted");
+    }
+
+    // 進入 password.html 頁面
+    if (localStorage.getItem("access_granted") !== "yes") {
+      window.location.href = "/static/password.html";
+    }
 
     // 按下 Enter 就送出訊息，支援shift + enter 換行輸入
     input.addEventListener("keydown", function (event) {
