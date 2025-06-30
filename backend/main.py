@@ -23,14 +23,19 @@ if not api_key:
 client = OpenAI(api_key = api_key)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("找不到 DATABASE_URL，請確認 .env 設定")
+
 CORRECT_PASSWORD = os.getenv("PASSWORD")
+if not CORRECT_PASSWORD:
+    raise RuntimeError("找不到 PASSWORD，請確認 .env 設定")
 # create_engine 是 SQLAlchemy 提供的一個函數，用來建立一個與資料庫的連線引擎（Engine）。這是連接資料庫的第一步，後續可以透過這個引擎執行 SQL 查詢或透過 ORM 進行操作。
 engine = create_engine(DATABASE_URL, echo=False) #echo=False 代表不會印出 SQL 查詢語句到 uvicorn console
 # Session 是你和資料庫之間的一個臨時會話連線，用來處理所有資料的查詢與變更操作，並負責管理資料的狀態（新增、修改、刪除）。
 # Session 就像是一個「編輯器」，你在這個 Session 裡做的操作（新增資料、改欄位、刪除）都只是暫存在編輯器裡，session.commit() 就像按下「儲存」鍵，才會把變更寫進實體資料庫。
 SessionLocal = sessionmaker(bind=engine)
 # declarative_base() 是 SQLAlchemy 用來建立 ORM 模型的「基底類別」，你定義的所有資料表都要繼承它。
-# why ORM? 
+# why ORM(Object-Relational Mapping)? 
 # 1. ORM 自動處理參數轉義，幾乎不可能發生 SQL injection
 # 2. ORM 幫你「把資料表當成類別，把欄位當成屬性」，你就不用寫一堆 SQL，也不需手動轉換資料格式
 Base = declarative_base()
@@ -56,11 +61,14 @@ app.add_middleware(
 )
 
 # ========== 掛載靜態檔案資料夾 ==========
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # -> /backend
+ROOT_DIR = os.path.dirname(BASE_DIR) # -> /CHATBOT
+STATIC_DIR = os.path.join(ROOT_DIR, "frontend") # -> /CHATBOT/frontend
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def root():
-    return FileResponse("frontend/index.html")
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 # ========== 驗證密碼 ==========
 @app.post("/verify")
@@ -82,6 +90,14 @@ class ChatInput(BaseModel):
 @app.post("/chat")
 async def chat(input: ChatInput):
     db = SessionLocal()
+
+    # 查詢該 user_id 已發送次數
+    count = db.query(Chat).filter(Chat.user_id == input.user_id, Chat.role == "user").count()
+    
+    MAX_MESSAGES = 20
+    if count >= MAX_MESSAGES:  # 設定每個使用者最多可發送 20 次
+        db.close()
+        return JSONResponse({"error": "已達到發送上限"}, status_code=403)
 
     # 儲存使用者訊息
     user_chat = Chat(user_id=input.user_id, message=input.message, role="user")

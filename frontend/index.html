@@ -35,7 +35,14 @@
   <button onclick="clearChat()">清除對話</button>
 
   <script>
-    const user_id = "user123";  // 固定 ID
+    // 嘗試從 localStorage 取得 user_id
+    let user_id = localStorage.getItem("user_id");
+
+    if (!user_id) {
+      // 如果沒有，隨機產生一個（可用 timestamp + 隨機碼）
+      user_id = "user_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
+      localStorage.setItem("user_id", user_id);  // 存入 localStorage
+    }
     const input = document.getElementById("userInput");
     const BASE_URL = window.location.origin;
 
@@ -72,8 +79,12 @@
         });
 
         const data = await res.json();
-        addMessage("聊天猴", data.reply, "bot");
-
+        if (res.status === 403) {
+          alert("您已達到免費發送上限！");
+        }
+        else {
+          addMessage("聊天猴", data.reply, "bot");
+        }
       } catch (err) {
         console.error("⚠️ 發送失敗：", err);
         addMessage("聊天猴", "抱歉，伺服器好像出問題了！", "bot");
