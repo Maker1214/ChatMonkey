@@ -1,49 +1,141 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>猴猴聊天</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", Calibri, sans-serif;
-      margin: 20px;
+      margin: 0; /* 移除預設邊距 */
+      display: flex; /* 將 body 設定為 Flex 容器 */
+      flex-direction: column; /* 子項目垂直排列 */
+      min-height: 100vh; /* 確保 body 佔滿整個視窗高度 */
+      background-color: #f0f2f5; /* 增加背景色 */
+      position: relative; /* 為了登出按鈕的定位 */
     }
+
+    h2 {
+      text-align: center;
+      margin-top: 15px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
     #chatBox {
       border: 1px solid #ccc;
       padding: 10px;
-      height: 300px;
-      overflow-y: scroll;
+      flex-grow: 1; /* 讓聊天框佔據剩餘所有空間 */
+      overflow-y: auto;
+      background-color: #fff;
+      margin: 40px 20px 10px 20px; /* 左右邊距，底部留空間給狀態訊息 */
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .user { color: blue; }
-    .bot { color: green; }
-    input[type="text"] {
-      width: 50%;
-      padding: 5px;
+
+    .user, .bot {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border-radius: 15px;
+      max-width: 30%;
+      word-wrap: break-word;
     }
-    button {
-      padding: 5px 10px;
+
+    .user {
+      background-color: #e0f7fa; /* 使用者訊息背景 */
+      color: #007bff; /* 使用者訊息文字顏色 */
+      margin-left: auto; /* 推到右邊 */
+      text-align: right;
     }
+
+    .bot {
+      /* background-color: #f1f1f1; /* 機器人訊息背景 */
+      color: #28a745; /* 機器人訊息文字顏色 */
+      margin-right: auto; /* 推到左邊 */
+      text-align: left;
+    }
+
+    #statusMessage { /* 新增狀態訊息框 */
+      text-align: center;
+      padding: 5px 20px;
+      color: #555;
+      font-size: 0.9em;
+    }
+
+    #input-controls-container { /* 包裹輸入框和所有按鈕的容器 */
+      display: flex; /* 設定為 Flex 容器 */
+      justify-content: center; /* 水平居中其內容 */
+      align-items: center; /* 垂直居中其內容 */
+      padding: 15px 20px; /* 上下內距和左右邊距 */
+      background-color: #eee;
+      border-top: 1px solid #ddd;
+      box-sizing: border-box; /* 確保 padding 不會增加總寬度 */
+      width: 100%; /* 確保容器佔滿整個寬度 */
+    }
+
+    #userInput { /* 輸入訊息框 */
+      flex-grow: 1; /* 讓 textarea 佔據大部分可用空間 */
+      max-width: 600px; /* 設定最大寬度，避免在大螢幕上過寬 */
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      margin-right: 10px; /* 與按鈕之間的間距 */
+      font-size: 16px;
+      resize: vertical; /* 允許垂直拖動改變大小 */
+    }
+
+    #input-controls-container button { /* 輸入框旁的按鈕們 */
+      padding: 10px 18px; /* 統一按鈕 padding */
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 8px; /* 按鈕之間的間距 */
+      flex-shrink: 0; /* 防止按鈕被壓縮 */
+    }
+
+    #input-controls-container button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 針對發送按鈕的特殊樣式 (可選) */
+    #sendMessageButton {
+        background-color: #28a745; /* 綠色發送按鈕 */
+    }
+    #sendMessageButton:hover {
+        background-color: #218838;
+    }
+
   </style>
 </head>
 <body>
-
-  <h2>猴猴聊天</h2>
   <div id="chatBox"></div>
-  <br>
-  <textarea id="userInput" placeholder="輸入訊息..." rows="2" style="width: 50%; padding: 5px;"></textarea>
-  <button onclick="loadHistory()">對話紀錄</button>
-  <button onclick="clearChat()">清除對話</button>
+  <div id="statusMessage"></div>
+
+  <div id="input-controls-container">
+    <textarea id="userInput" placeholder="輸入訊息..." rows="2"></textarea>
+    <button id="sendMessageButton">發送</button>
+    <button onclick="loadHistory()">對話紀錄</button>
+    <button onclick="clearChat()">清除對話</button>
+  </div>
 
   <script>
     // 嘗試從 localStorage 取得 user_id
     let user_id = localStorage.getItem("user_id");
 
     if (!user_id) {
-      // 如果沒有，隨機產生一個（可用 timestamp + 隨機碼）
+      // 如果沒有，隨機產生一個
       user_id = "user_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
       localStorage.setItem("user_id", user_id);  // 存入 localStorage
     }
-    const input = document.getElementById("userInput");
+
+    const userInput = document.getElementById("userInput");
+    const sendMessageButton = document.getElementById("sendMessageButton");
+    const chatBox = document.getElementById("chatBox");
+    const statusMessage = document.getElementById("statusMessage");
+
     const BASE_URL = window.location.origin;
 
     // 如果是手動打開 index.html 時才清除，從密碼頁跳轉就不清
@@ -57,19 +149,25 @@
     }
 
     // 按下 Enter 就送出訊息，支援shift + enter 換行輸入
-    input.addEventListener("keydown", function (event) {
+    userInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();  // 防止換行或表單提交
+        event.preventDefault(); // 防止換行或表單提交
         sendMessage();
       }
     });
 
+    // 點擊發送按鈕觸發 sendMessage
+    sendMessageButton.addEventListener("click", sendMessage);
+
     // 傳送訊息給後端
     async function sendMessage() {
-      const msg = input.value;
+      const msg = userInput.value;
       if (!msg.trim()) return;
 
       addMessage("你", msg, "user");
+      userInput.value = "";
+      userInput.focus();
+      statusMessage.textContent = "機器人思考中...";
 
       try {
         const res = await fetch(`${BASE_URL}/chat`, {
@@ -79,29 +177,37 @@
         });
 
         const data = await res.json();
+
+        // 處理 401 狀態碼的邏輯已移除，因為前端強制跳轉到密碼頁處理驗證
+        // 後端應自行處理未授權問題，或前端在password.html處理驗證
+
         if (res.status === 403) {
-          alert("您已達到免費發送上限！");
-        }
-        else {
-          addMessage("聊天猴", data.reply, "bot");
+            alert(data.error || data.detail || "您已達到發送上限！");
+            statusMessage.textContent = data.error || data.detail || "已達到發送上限。";
+            userInput.disabled = true;
+            sendMessageButton.disabled = true;
+        } else if (res.ok) {
+            addMessage("聊天猴", data.reply, "bot");
+            statusMessage.textContent = "";
+        } else {
+            const errorMsg = data.detail || "發生未知錯誤。";
+            console.error("⚠️ 伺服器錯誤：", data);
+            addMessage("聊天猴", `抱歉，伺服器錯誤：${errorMsg}`, "bot");
+            statusMessage.textContent = `錯誤：${errorMsg}`;
         }
       } catch (err) {
         console.error("⚠️ 發送失敗：", err);
-        addMessage("聊天猴", "抱歉，伺服器好像出問題了！", "bot");
+        addMessage("聊天猴", "抱歉，網路或伺服器好像出問題了！", "bot");
+        statusMessage.textContent = "網路錯誤，請稍後再試。";
       }
-
-      input.value = "";    // 清空輸入
-      input.focus();       // 聚焦輸入
     }
 
     // 加入訊息顯示
     function addMessage(sender, msg, role) {
-      const box = document.getElementById("chatBox");
-      // JavaScript 動態插入 <div class ....></div>
-      box.insertAdjacentHTML("beforeend",
+      chatBox.insertAdjacentHTML("beforeend",
         `<div class="${role}"><b>${sender}:</b> ${msg}</div>`
       );
-      box.scrollTop = box.scrollHeight;
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     // 查詢歷史紀錄
@@ -109,8 +215,7 @@
       try {
         const res = await fetch(`${BASE_URL}/history?user_id=${user_id}`);
         const data = await res.json();
-        const box = document.getElementById("chatBox");
-        box.innerHTML = "";
+        chatBox.innerHTML = "";
 
         data.history.forEach(e => {
           const sender = e.role === "user" ? "你" : "聊天猴";
