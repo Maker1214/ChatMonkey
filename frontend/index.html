@@ -100,7 +100,7 @@
       background-color: #0056b3;
     }
 
-    /* 針對發送按鈕的特殊樣式 (可選) */
+    /* 針對發送按鈕的特殊樣式 */
     #sendMessageButton {
         background-color: #28a745; /* 綠色發送按鈕 */
     }
@@ -177,9 +177,6 @@
         });
 
         const data = await res.json();
-
-        // 處理 401 狀態碼的邏輯已移除，因為前端強制跳轉到密碼頁處理驗證
-        // 後端應自行處理未授權問題，或前端在password.html處理驗證
 
         if (res.status === 403) {
             alert(data.error || data.detail || "您已達到發送上限！");
