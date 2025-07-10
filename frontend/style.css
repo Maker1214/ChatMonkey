@@ -1,0 +1,143 @@
+body.homepage{
+    font-family: "Microsoft JhengHei", Calibri, sans-serif;
+    margin: 0;
+    display: flex; /* 將 body 設定為 Flex 容器 */
+    flex-direction: column; /* 子項目垂直排列 */
+    min-height: 100vh; /* 確保 body 佔滿整個視窗高度 */
+    background-color: #f0f2f5; /* 增加背景色 */
+}
+
+.homepage #chatBox {
+    border: 1px solid #ccc;
+    padding: 10px;
+    flex-grow: 1; /* 讓聊天框佔據剩餘所有空間 */
+    overflow-y: auto; /* 當聊天訊息的高度超出 chatBox 的高度後，將會出現垂直捲軸，允許用戶滾動查看對話。 */
+    background-color: #fff;
+    margin: 20px;
+    border-radius: 8px; /* 使聊天框的角落圓潤 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 增添陰影 */
+}
+
+.homepage .user,
+.homepage .bot {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 30%;
+    word-wrap: break-word; /* 防止長單詞溢出容器 */ 
+}
+
+.homepage .user {
+    background-color: #e0f7fa; /* 使用者訊息背景 */
+    color: #007bff; /* 使用者訊息文字顏色 */
+    margin-left: auto; /* 推到右邊 */
+    text-align: right;
+}
+
+.homepage .bot {
+    /* background-color: #f1f1f1; /* 機器人訊息背景 */
+    color: #28a745; /* 機器人訊息文字顏色 */
+    margin-right: auto; /* 推到左邊 */
+    text-align: left;
+}
+
+.homepage #statusMessage { /* 機器人思考狀態訊息框 */
+    text-align: center;
+    padding: 5px 20px;
+    color: #555;
+    font-size: 0.9em;
+}
+
+.homepage #input-controls-container { /* 包裹輸入框和所有按鈕的容器 */
+    display: flex; /* 設定為 Flex 容器 */
+    justify-content: center; /* 使內容水平居中 */
+    align-items: center; /* 使內容垂直居中 */
+    padding: 15px 20px;
+    background-color: #eee;
+    border-top: 1px solid #ddd;
+    box-sizing: border-box; /* 確保 padding、border(若有) 不會增加總寬度 */
+    width: 100%; /* 確保容器佔滿整個寬度 */
+}
+
+.homepage #userInput { /* 輸入訊息框 */
+    flex-grow: 1; /* 讓 textarea 佔據大部分可用空間 */
+    max-width: 600px; /* 設定最大寬度，避免在大螢幕上過寬 */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-right: 10px; /* 與按鈕之間的間距 */
+    font-size: 16px;
+    resize: vertical; /* 允許垂直拖動改變大小 */
+}
+
+.homepage #input-controls-container button { /* 輸入框旁的所有按鈕 */
+    padding: 10px 18px; /* 統一按鈕 padding */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 8px; /* 按鈕之間的間距 */
+    flex-shrink: 0; /* 防止按鈕被壓縮 */
+}
+
+.homepage #input-controls-container button:hover {
+    background-color: #0056b3;
+}
+
+/* 針對發送按鈕的特殊樣式 */
+.homepage #sendMessageButton {
+    background-color: #28a745; /* 綠色發送按鈕 */
+}
+
+.homepage #sendMessageButton:hover {
+    background-color: #218838;
+}
+
+.homepage #password-container{
+    border-radius: 8px; /* 使聊天框的角落圓潤 */
+
+}
+
+body.password-page {
+    display: flex;
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+    min-height: 100vh; /* 佔滿整個視窗高度 */
+    background-color: #e6f0ff; /* 增加背景色 */
+    margin : 0;
+}
+
+.password-page .password-container{
+    display: flex; /* 將這個容器也設定為 Flex 容器 */
+    flex-direction: column; /* 讓輸入框和按鈕垂直排列 */
+    gap: 10px; /* 增加輸入框和按鈕之間的間距 */
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    align-items: center; /* 讓容器內的子項目（輸入框和按鈕）水平居中 */
+}
+
+.password-page #passwordInput {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 250px; /* 給輸入框一個固定寬度 */
+}
+
+.password-page #password-container button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.password-page #password-container button:hover {
+    background-color: #0056b3;
+}
