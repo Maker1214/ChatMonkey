@@ -128,7 +128,7 @@ body.password-page {
     width: 250px; /* 給輸入框一個固定寬度 */
 }
 
-.password-page #password-container button {
+.password-page .password-container button {
     padding: 10px 20px;
     background-color: #007bff;
     color: white;
@@ -138,6 +138,6 @@ body.password-page {
     font-size: 16px;
 }
 
-.password-page #password-container button:hover {
+.password-page .password-container button:hover {
     background-color: #0056b3;
 }
